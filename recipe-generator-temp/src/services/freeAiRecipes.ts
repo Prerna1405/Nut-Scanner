@@ -1,0 +1,398 @@
+export interface Recipe {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  cuisine: string;
+  prepTime: string;
+  cookTime: string;
+  servings: number;
+  difficulty: string;
+  nutrition: {
+    calories: number;
+    protein: string;
+    carbs: string;
+    fat: string;
+    fiber: string;
+  };
+  ingredients: string[];
+  instructions: string[];
+  fitnessBenefits: string;
+  ingredientAlternatives: string[];
+  imagePrompt: string;
+  icon: string;
+  scores: {
+    proteinScore: number;
+    healthScore: number;
+    goalCompatibilityScore: number;
+    overallScore: number;
+  };
+  isGenerated?: boolean;
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  tags: string[];
+}
+
+const DIVERSE_RECIPES: Recipe[] = [
+  // BREAKFAST
+  {
+    id: "breakfast-1",
+    name: "Oats Protein Bowl",
+    description: "High-protein, fiber-rich breakfast for sustained energy",
+    category: "Breakfast",
+    cuisine: "American",
+    prepTime: "5 mins",
+    cookTime: "10 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 380, protein: "25g", carbs: "45g", fat: "10g", fiber: "8g" },
+    ingredients: ["Rolled oats (½ cup)", "Protein powder (1 scoop)", "Almond milk (1 cup)", "Blueberries (½ cup)", "Peanut butter (1 tbsp)", "Chia seeds (1 tsp)", "Honey (1 tsp)"],
+    instructions: ["Cook oats in almond milk over medium heat.", "Stir in protein powder until smooth.", "Top with blueberries, peanut butter, chia seeds, and honey."],
+    fitnessBenefits: "High protein for muscle repair, fiber for gut health, complex carbs for sustained energy.",
+    ingredientAlternatives: ["Use soy milk instead of almond milk", "Use strawberries instead of blueberries", "Use almond butter instead of peanut butter"],
+    imagePrompt: "A beautiful bowl of oatmeal with protein powder, fresh blueberries, peanut butter, and chia seeds, elegant food photography",
+    icon: "🥣",
+    scores: { proteinScore: 9, healthScore: 10, goalCompatibilityScore: 9, overallScore: 9.5 },
+    mealType: "breakfast",
+    tags: ["high-protein", "vegetarian", "quick"]
+  },
+  {
+    id: "breakfast-2",
+    name: "Greek Yogurt & Berries",
+    description: "Protein-packed, probiotic-rich morning snack",
+    category: "Breakfast",
+    cuisine: "Mediterranean",
+    prepTime: "3 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 280, protein: "20g", carbs: "25g", fat: "10g", fiber: "5g" },
+    ingredients: ["Greek yogurt (1 cup)", "Mixed berries (½ cup)", "Granola (¼ cup)", "Honey (1 tsp)", "Almonds (1 tbsp)"],
+    instructions: ["Layer Greek yogurt, berries, and granola in a bowl.", "Drizzle with honey and top with almonds."],
+    fitnessBenefits: "Probiotics for gut health, high protein for satiety, antioxidants from berries.",
+    ingredientAlternatives: ["Use coconut yogurt instead of Greek yogurt", "Use banana instead of berries"],
+    imagePrompt: "A colorful bowl of Greek yogurt with mixed berries, granola, and sliced almonds, bright morning lighting",
+    icon: "🫐",
+    scores: { proteinScore: 8, healthScore: 10, goalCompatibilityScore: 9, overallScore: 9 },
+    mealType: "breakfast",
+    tags: ["vegetarian", "quick", "no-cook"]
+  },
+  {
+    id: "breakfast-3",
+    name: "Egg & Veggie Scramble",
+    description: "Savory, protein-rich breakfast with vegetables",
+    category: "Breakfast",
+    cuisine: "American",
+    prepTime: "5 mins",
+    cookTime: "8 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 320, protein: "28g", carbs: "10g", fat: "18g", fiber: "3g" },
+    ingredients: ["Eggs (3)", "Spinach (½ cup)", "Bell pepper (¼ cup)", "Tomato (¼ cup)", "Onion (2 tbsp)", "Feta cheese (2 tbsp)", "Olive oil (1 tsp)"],
+    instructions: ["Sauté onions, peppers, and tomato in olive oil.", "Add eggs and scramble until almost set.", "Stir in spinach and feta, cook until eggs are done."],
+    fitnessBenefits: "High protein for muscle repair, vitamins from vegetables.",
+    ingredientAlternatives: ["Use tofu instead of eggs for vegan option", "Use mushrooms instead of bell peppers"],
+    imagePrompt: "A fluffy egg scramble with spinach, bell peppers, tomatoes, and feta cheese in a white bowl",
+    icon: "🍳",
+    scores: { proteinScore: 10, healthScore: 9, goalCompatibilityScore: 9, overallScore: 9.5 },
+    mealType: "breakfast",
+    tags: ["high-protein", "low-carb", "savory"]
+  },
+  {
+    id: "breakfast-4",
+    name: "Protein Smoothie",
+    description: "Quick, nutrient-dense on-the-go breakfast",
+    category: "Breakfast",
+    cuisine: "American",
+    prepTime: "5 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 350, protein: "30g", carbs: "35g", fat: "8g", fiber: "6g" },
+    ingredients: ["Protein powder (1 scoop)", "Banana (1)", "Spinach (1 cup)", "Almond milk (1.5 cups)", "Peanut butter (1 tbsp)", "Ice (1 cup)"],
+    instructions: ["Blend all ingredients until smooth and creamy.", "Serve immediately."],
+    fitnessBenefits: "Quick protein delivery for post-workout or busy mornings, greens for micronutrients.",
+    ingredientAlternatives: ["Use kale instead of spinach", "Use oat milk instead of almond milk"],
+    imagePrompt: "A green protein smoothie in a tall glass with a straw and fresh banana garnish",
+    icon: "🥤",
+    scores: { proteinScore: 10, healthScore: 9, goalCompatibilityScore: 10, overallScore: 9.7 },
+    mealType: "breakfast",
+    tags: ["high-protein", "quick", "on-the-go"]
+  },
+  {
+    id: "breakfast-5",
+    name: "Chia Seed Pudding",
+    description: "Creamy, fiber-rich overnight breakfast",
+    category: "Breakfast",
+    cuisine: "Mediterranean",
+    prepTime: "5 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 340, protein: "12g", carbs: "30g", fat: "20g", fiber: "15g" },
+    ingredients: ["Chia seeds (3 tbsp)", "Almond milk (1 cup)", "Vanilla extract (½ tsp)", "Honey (1 tsp)", "Fresh berries (½ cup)", "Coconut flakes (1 tbsp)"],
+    instructions: ["Mix chia seeds, almond milk, vanilla, and honey in a jar.", "Refrigerate overnight.", "Top with berries and coconut flakes in the morning."],
+    fitnessBenefits: "Omega-3 fats for brain health, high fiber for digestion.",
+    ingredientAlternatives: ["Use soy milk instead of almond milk", "Use mango instead of berries"],
+    imagePrompt: "Chia seed pudding in a glass jar topped with fresh berries and toasted coconut flakes, minimalist aesthetic",
+    icon: "🥥",
+    scores: { proteinScore: 6, healthScore: 10, goalCompatibilityScore: 8, overallScore: 8.5 },
+    mealType: "breakfast",
+    tags: ["vegetarian", "vegan", "make-ahead"]
+  },
+
+  // LUNCH
+  {
+    id: "lunch-1",
+    name: "Chicken Rice Bowl",
+    description: "Balanced high-protein, high-fiber lunch bowl",
+    category: "Lunch",
+    cuisine: "American",
+    prepTime: "10 mins",
+    cookTime: "20 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 450, protein: "35g", carbs: "40g", fat: "12g", fiber: "6g" },
+    ingredients: ["Chicken breast (150g)", "Brown rice (½ cup cooked)", "Broccoli (1 cup)", "Bell pepper (½ cup)", "Soy sauce (1 tbsp)", "Garlic (2 cloves)", "Olive oil (1 tsp)"],
+    instructions: ["Cook brown rice.", "Sauté chicken in olive oil with garlic until cooked through.", "Steam broccoli and bell peppers.", "Assemble all in a bowl, drizzle with soy sauce."],
+    fitnessBenefits: "High protein for muscle gain, complex carbs for energy, fiber from veggies.",
+    ingredientAlternatives: ["Use tofu instead of chicken for vegetarian option", "Use quinoa instead of brown rice"],
+    imagePrompt: "A colorful grain bowl with grilled chicken, brown rice, steamed broccoli, and bell peppers in a minimalist white bowl",
+    icon: "🍗",
+    scores: { proteinScore: 10, healthScore: 10, goalCompatibilityScore: 10, overallScore: 10 },
+    mealType: "lunch",
+    tags: ["high-protein", "balanced", "quick"]
+  },
+  {
+    id: "lunch-2",
+    name: "Paneer Stir Fry",
+    description: "Vegetarian high-protein Indian-style lunch",
+    category: "Lunch",
+    cuisine: "Indian",
+    prepTime: "10 mins",
+    cookTime: "15 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 380, protein: "25g", carbs: "25g", fat: "20g", fiber: "5g" },
+    ingredients: ["Paneer (150g)", "Bell peppers (1 cup)", "Onion (½ cup)", "Tomato (½ cup)", "Garam masala (½ tsp)", "Cumin (½ tsp)", "Coriander (2 tbsp)", "Olive oil (1 tsp)"],
+    instructions: ["Sauté onions and bell peppers until tender.", "Add paneer and spices, cook until paneer is golden.", "Stir in tomatoes and cook until soft, garnish with coriander."],
+    fitnessBenefits: "High vegetarian protein from paneer, spices aid digestion.",
+    ingredientAlternatives: ["Use firm tofu instead of paneer", "Use cauliflower instead of bell peppers"],
+    imagePrompt: "A vibrant paneer stir fry with colorful bell peppers and fresh coriander in a kadai",
+    icon: "🧀",
+    scores: { proteinScore: 9, healthScore: 9, goalCompatibilityScore: 9, overallScore: 9 },
+    mealType: "lunch",
+    tags: ["vegetarian", "indian", "high-protein"]
+  },
+  {
+    id: "lunch-3",
+    name: "Grilled Chicken Salad",
+    description: "Light, protein-rich salad for weight management",
+    category: "Lunch",
+    cuisine: "Mediterranean",
+    prepTime: "10 mins",
+    cookTime: "15 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 340, protein: "30g", carbs: "15g", fat: "18g", fiber: "5g" },
+    ingredients: ["Grilled chicken breast (150g)", "Mixed greens (2 cups)", "Cherry tomatoes (½ cup)", "Cucumber (½ cup)", "Feta (30g)", "Red onion (¼ cup)", "Olive oil (1 tbsp)", "Balsamic vinegar (1 tsp)"],
+    instructions: ["Toss mixed greens, tomatoes, cucumber, and onion in a bowl.", "Top with sliced grilled chicken and feta.", "Drizzle with olive oil and balsamic vinegar."],
+    fitnessBenefits: "Lean protein for satiety, low carbs for weight loss, heart-healthy fats from olive oil.",
+    ingredientAlternatives: ["Use canned tuna instead of chicken", "Use goat cheese instead of feta"],
+    imagePrompt: "A beautiful grilled chicken salad with mixed greens, cherry tomatoes, cucumber, feta, and red onion in a white bowl",
+    icon: "🥗",
+    scores: { proteinScore: 10, healthScore: 10, goalCompatibilityScore: 9, overallScore: 9.7 },
+    mealType: "lunch",
+    tags: ["high-protein", "low-carb", "salad"]
+  },
+  {
+    id: "lunch-4",
+    name: "Quinoa & Black Bean Bowl",
+    description: "Vegan protein power bowl with complete amino acids",
+    category: "Lunch",
+    cuisine: "Mexican",
+    prepTime: "10 mins",
+    cookTime: "15 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 400, protein: "20g", carbs: "55g", fat: "10g", fiber: "12g" },
+    ingredients: ["Quinoa (½ cup cooked)", "Black beans (½ cup)", "Corn (½ cup)", "Avocado (¼)", "Tomato (½)", "Lime juice (1 tbsp)", "Cilantro (2 tbsp)", "Taco seasoning (½ tsp)"],
+    instructions: ["Layer quinoa, beans, and corn in a bowl.", "Top with diced tomato and sliced avocado.", "Squeeze lime juice and sprinkle taco seasoning and cilantro."],
+    fitnessBenefits: "Complete plant-based protein, high fiber for satiety.",
+    ingredientAlternatives: ["Use brown rice instead of quinoa", "Use kidney beans instead of black beans"],
+    imagePrompt: "A vibrant Mexican quinoa bowl with black beans, corn, avocado, and fresh cilantro, bright daylight",
+    icon: "🌮",
+    scores: { proteinScore: 8, healthScore: 10, goalCompatibilityScore: 9, overallScore: 9 },
+    mealType: "lunch",
+    tags: ["vegan", "high-fiber", "mexican"]
+  },
+
+  // DINNER
+  {
+    id: "dinner-1",
+    name: "Baked Salmon & Veggies",
+    description: "Omega-3 rich, high-protein dinner for recovery",
+    category: "Dinner",
+    cuisine: "Mediterranean",
+    prepTime: "10 mins",
+    cookTime: "25 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 420, protein: "32g", carbs: "20g", fat: "22g", fiber: "5g" },
+    ingredients: ["Salmon fillet (150g)", "Asparagus (1 cup)", "Cherry tomatoes (½ cup)", "Olive oil (1 tbsp)", "Lemon juice (1 tsp)", "Garlic (2 cloves)", "Dill (1 tsp)"],
+    instructions: ["Preheat oven to 400°F.", "Place salmon, asparagus, and tomatoes on a baking sheet.", "Drizzle with olive oil, lemon juice, and sprinkle garlic and dill.", "Bake for 20-25 minutes."],
+    fitnessBenefits: "Omega-3 for heart health and recovery, high protein for repair.",
+    ingredientAlternatives: ["Use cod instead of salmon", "Use broccoli instead of asparagus"],
+    imagePrompt: "Baked salmon fillet with roasted asparagus and cherry tomatoes on a white plate with lemon wedge",
+    icon: "🐟",
+    scores: { proteinScore: 10, healthScore: 10, goalCompatibilityScore: 10, overallScore: 10 },
+    mealType: "dinner",
+    tags: ["high-protein", "omega-3", "quick"]
+  },
+  {
+    id: "dinner-2",
+    name: "Turkey & Zucchini Meatballs",
+    description: "Light, low-carb dinner option",
+    category: "Dinner",
+    cuisine: "Italian",
+    prepTime: "15 mins",
+    cookTime: "20 mins",
+    servings: 1,
+    difficulty: "Medium",
+    nutrition: { calories: 380, protein: "30g", carbs: "15g", fat: "20g", fiber: "4g" },
+    ingredients: ["Ground turkey (150g)", "Zucchini (1 cup, grated)", "Parmesan cheese (2 tbsp)", "Garlic (2 cloves)", "Marinara sauce (½ cup)", "Fresh basil (2 tbsp)", "Olive oil (1 tsp)"],
+    instructions: ["Mix ground turkey, zucchini, parmesan, and garlic. Form into meatballs.", "Sauté meatballs in olive oil until browned, then add marinara and simmer 10 mins.", "Serve over zucchini noodles or on their own."],
+    fitnessBenefits: "Lean turkey protein, low carb, veggies for volume without calories.",
+    ingredientAlternatives: ["Use chicken instead of turkey", "Use spaghetti squash instead of zucchini noodles"],
+    imagePrompt: "Turkey zucchini meatballs in marinara sauce topped with fresh basil in a white bowl",
+    icon: "🍝",
+    scores: { proteinScore: 10, healthScore: 9, goalCompatibilityScore: 9, overallScore: 9.5 },
+    mealType: "dinner",
+    tags: ["high-protein", "low-carb", "italian"]
+  },
+  {
+    id: "dinner-3",
+    name: "Tofu Curry",
+    description: "Flavorful, vegan high-protein dinner",
+    category: "Dinner",
+    cuisine: "Thai",
+    prepTime: "10 mins",
+    cookTime: "20 mins",
+    servings: 1,
+    difficulty: "Medium",
+    nutrition: { calories: 400, protein: "22g", carbs: "35g", fat: "20g", fiber: "6g" },
+    ingredients: ["Firm tofu (150g)", "Coconut milk (½ cup)", "Thai curry paste (1 tbsp)", "Broccoli (1 cup)", "Bell pepper (½ cup)", "Brown rice (½ cup)", "Lime juice (1 tsp)"],
+    instructions: ["Press tofu and cube it, then pan-fry until golden.", "Sauté curry paste, add coconut milk and veggies, simmer 10 mins.", "Add tofu, serve over brown rice with lime juice."],
+    fitnessBenefits: "Plant-based protein, coconut fats for energy, anti-inflammatory spices.",
+    ingredientAlternatives: ["Use chickpeas instead of tofu", "Use green beans instead of broccoli"],
+    imagePrompt: "Thai tofu curry with broccoli and bell peppers in coconut milk, served in a white bowl",
+    icon: "🍛",
+    scores: { proteinScore: 8, healthScore: 10, goalCompatibilityScore: 9, overallScore: 9 },
+    mealType: "dinner",
+    tags: ["vegan", "thai", "high-protein"]
+  },
+
+  // SNACKS
+  {
+    id: "snack-1",
+    name: "Apple & Almond Butter",
+    description: "Quick, balanced snack with fiber and healthy fats",
+    category: "Snack",
+    cuisine: "American",
+    prepTime: "2 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 220, protein: "6g", carbs: "25g", fat: "12g", fiber: "6g" },
+    ingredients: ["Apple (1)", "Almond butter (1 tbsp)", "Cinnamon (pinch)"],
+    instructions: ["Slice apple and spread almond butter on each slice.", "Sprinkle with cinnamon if desired."],
+    fitnessBenefits: "Fiber for digestion, healthy fats for satiety.",
+    ingredientAlternatives: ["Use peanut butter instead of almond butter", "Use banana instead of apple"],
+    imagePrompt: "Red apple slices with almond butter drizzle and a sprinkle of cinnamon",
+    icon: "🍎",
+    scores: { proteinScore: 5, healthScore: 10, goalCompatibilityScore: 8, overallScore: 8 },
+    mealType: "snack",
+    tags: ["vegetarian", "quick", "no-cook"]
+  },
+  {
+    id: "snack-2",
+    name: "High-Protein Greek Yogurt",
+    description: "Protein-packed snack to curb cravings",
+    category: "Snack",
+    cuisine: "Mediterranean",
+    prepTime: "2 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 180, protein: "20g", carbs: "12g", fat: "5g", fiber: "0g" },
+    ingredients: ["Greek yogurt (1 cup)", "Honey (1 tsp)", "Protein granola (2 tbsp)"],
+    instructions: ["Mix honey into Greek yogurt and top with granola."],
+    fitnessBenefits: "High protein for satiety, curbs sugar cravings.",
+    ingredientAlternatives: ["Use soy yogurt instead of Greek yogurt", "Use nuts instead of granola"],
+    imagePrompt: "Greek yogurt in a small bowl with a drizzle of honey and granola",
+    icon: "🍶",
+    scores: { proteinScore: 10, healthScore: 9, goalCompatibilityScore: 9, overallScore: 9.3 },
+    mealType: "snack",
+    tags: ["high-protein", "vegetarian", "quick"]
+  },
+  {
+    id: "snack-3",
+    name: "Hard-Boiled Eggs & Hummus",
+    description: "High-protein savory snack",
+    category: "Snack",
+    cuisine: "Mediterranean",
+    prepTime: "5 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 250, protein: "18g", carbs: "15g", fat: "14g", fiber: "4g" },
+    ingredients: ["Hard-boiled eggs (2)", "Hummus (3 tbsp)", "Baby carrots (½ cup)"],
+    instructions: ["Serve eggs with hummus and carrot sticks."],
+    fitnessBenefits: "High protein and fiber for sustained energy.",
+    ingredientAlternatives: ["Use egg whites only", "Use cucumber instead of carrots"],
+    imagePrompt: "Hard-boiled eggs halved, with a bowl of hummus and carrot sticks",
+    icon: "🥚",
+    scores: { proteinScore: 10, healthScore: 9, goalCompatibilityScore: 9, overallScore: 9.3 },
+    mealType: "snack",
+    tags: ["high-protein", "savory", "quick"]
+  },
+  {
+    id: "snack-4",
+    name: "Mixed Nuts & Dried Fruit",
+    description: "Nutrient-dense trail mix for energy",
+    category: "Snack",
+    cuisine: "American",
+    prepTime: "2 mins",
+    cookTime: "0 mins",
+    servings: 1,
+    difficulty: "Easy",
+    nutrition: { calories: 300, protein: "10g", carbs: "25g", fat: "20g", fiber: "4g" },
+    ingredients: ["Almonds (1 tbsp)", "Walnuts (1 tbsp)", "Cashews (1 tbsp)", "Raisins (1 tbsp)", "Dried cranberries (1 tbsp)"],
+    instructions: ["Mix together in a small bowl or bag.", "Enjoy!"],
+    fitnessBenefits: "Healthy fats, protein, and quick energy from dried fruit.",
+    ingredientAlternatives: ["Use pecans instead of walnuts", "Use dates instead of raisins"],
+    imagePrompt: "A small bowl of mixed nuts and dried cranberries on a wooden table",
+    icon: "🥜",
+    scores: { proteinScore: 6, healthScore: 8, goalCompatibilityScore: 7, overallScore: 7 },
+    mealType: "snack",
+    tags: ["vegetarian", "trail-mix", "portable"]
+  }
+];
+
+export function getDiverseRecipe(mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', usedNames: string[], goals: string = 'maintenance'): Recipe {
+  let candidates = DIVERSE_RECIPES.filter(r => 
+    r.mealType === mealType && !usedNames.includes(r.name)
+  );
+  
+  // Fallback if no unused candidates
+  if (candidates.length === 0) {
+    candidates = DIVERSE_RECIPES.filter(r => r.mealType === mealType);
+  }
+  
+  // Pick random
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+export function getFreeAiRecipe(ingredients: string, goal: string): Recipe {
+  const used: string[] = [];
+  return getDiverseRecipe('lunch', used, goal);
+}
