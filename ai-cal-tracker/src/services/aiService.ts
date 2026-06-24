@@ -210,23 +210,61 @@ export async function analyzeFoodImage(imageUri: string): Promise<FoodAnalysisRe
   // First try Gemini API
   if (apiKey) {
     try {
-      // 1. Fetch image and convert to Blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      let base64Data: string;
+      let mimeType = "image/jpeg";
 
-      // 2. Convert Blob to Base64
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          const base64 = result.split(",")[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      // Handle React Native/Expo local URIs (like file://, asset://, etc.)
+      try {
+        if (imageUri.startsWith("file://") || imageUri.startsWith("asset://") || imageUri.startsWith("data:")) {
+          // If it's already data URI, extract base64
+          if (imageUri.startsWith("data:")) {
+            const [header, data] = imageUri.split(",");
+            base64Data = data || "";
+            const mimeMatch = header.match(/data:([^;]+)/);
+            if (mimeMatch && mimeMatch[1]) {
+              mimeType = mimeMatch[1];
+            }
+          } else {
+            // For local file URIs, try React Native's fetch approach with base64
+            const response = await fetch(imageUri);
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(response.body as any);
+            });
+            const [header, data] = dataUrl.split(",");
+            base64Data = data || "";
+            const mimeMatch = header.match(/data:([^;]+)/);
+            if (mimeMatch && mimeMatch[1]) {
+              mimeType = mimeMatch[1];
+            }
+          }
+        } else {
+          // Web or remote URL approach
+          const response = await fetch(imageUri);
+          // Try to get base64 safely
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(response.body as any);
+          });
+          const [header, data] = dataUrl.split(",");
+          base64Data = data || "";
+          const mimeMatch = header.match(/data:([^;]+)/);
+          if (mimeMatch && mimeMatch[1]) {
+            mimeType = mimeMatch[1];
+          }
+        }
+      } catch (imageError) {
+        console.warn("[AI Service] Failed to process image, using fallback directly", imageError);
+        return commonFoods[0];
+      }
 
-      const mimeType = blob.type || "image/jpeg";
+      if (!base64Data) {
+        return commonFoods[0];
+      }
 
       // Try multiple models for better reliability
       const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];

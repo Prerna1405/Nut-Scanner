@@ -128,7 +128,7 @@ export default function WorkoutResult() {
       checkAndSyncReminders(userId);
 
       Alert.alert("Success", "Workout logged successfully!", [
-        { text: "OK", onPress: () => router.dismissAll() },
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
       ]);
     } catch (error) {
       console.error(error);

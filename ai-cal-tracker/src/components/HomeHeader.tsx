@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { borderRadius, spacing } from "../constants/Colors";
@@ -30,7 +30,13 @@ export function HomeHeader() {
         </View>
       </View>
       
-      <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+      <TouchableOpacity 
+        style={styles.notificationButton} 
+        activeOpacity={0.7}
+        onPress={() => {
+          Alert.alert("Notifications", "Notification feature coming soon!");
+        }}
+      >
         <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
         <View style={styles.notificationBadge} />
       </TouchableOpacity>
