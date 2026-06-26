@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import { generateRecipe } from "./src/server/ai.js";
-import { getNutrition } from "./src/server/nutrition.js";
-import { normalizeIngredient, makeCacheKey } from "./src/server/utils.js";
+import { generateRecipe } from "./ai.js";
+import { getNutrition } from "./nutrition.js";
+import { normalizeIngredient, makeCacheKey } from "./utils.js";
 
 dotenv.config();
 
