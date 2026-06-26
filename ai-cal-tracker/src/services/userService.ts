@@ -611,3 +611,66 @@ export async function getWeightHistory(userId: string) {
   }
 }
 
+export interface CoachCheckIn {
+  id?: string;
+  userId: string;
+  date: string;
+  caloriesShortfall: number;
+  transcriptSummary: string;
+  userFeedbackNotes: string;
+  status: "Needs Attention" | "Normal" | "Reviewed";
+  createdAt: string;
+}
+
+export async function saveCoachCheckIn(data: Omit<CoachCheckIn, "id" | "createdAt">) {
+  try {
+    const { collection, addDoc } = await import("firebase/firestore");
+    const checkInsRef = collection(db, "coach_check_ins");
+    await addDoc(checkInsRef, {
+      ...data,
+      createdAt: new Date().toISOString(),
+    });
+    console.log(`[Firebase Sync] Saved coach check-in for user ${data.userId}`);
+  } catch (error) {
+    console.error("[Firebase Sync] Error saving coach check-in:", error);
+    throw error;
+  }
+}
+
+export async function getAllCoachCheckIns(): Promise<CoachCheckIn[]> {
+  try {
+    const { collection, getDocs, query, orderBy } = await import("firebase/firestore");
+    const checkInsRef = collection(db, "coach_check_ins");
+    const q = query(checkInsRef, orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    const results: CoachCheckIn[] = [];
+    snap.forEach((doc) => {
+      const data = doc.data();
+      results.push({
+        id: doc.id,
+        userId: data.userId,
+        date: data.date,
+        caloriesShortfall: data.caloriesShortfall,
+        transcriptSummary: data.transcriptSummary,
+        userFeedbackNotes: data.userFeedbackNotes,
+        status: data.status,
+        createdAt: data.createdAt,
+      });
+    });
+    return results;
+  } catch (error) {
+    console.error("[Firebase Sync] Error fetching coach check-ins:", error);
+    return [];
+  }
+}
+
+export async function updateCoachCheckInStatus(id: string, status: "Needs Attention" | "Normal" | "Reviewed") {
+  try {
+    const { doc, updateDoc } = await import("firebase/firestore");
+    const checkInRef = doc(db, "coach_check_ins", id);
+    await updateDoc(checkInRef, { status });
+  } catch (error) {
+    console.error("[Firebase Sync] Error updating coach check-in status:", error);
+    throw error;
+  }
+}

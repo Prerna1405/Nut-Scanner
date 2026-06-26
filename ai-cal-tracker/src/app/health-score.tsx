@@ -217,7 +217,7 @@ export default function HealthScoreScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => router.replace("/(tabs)/profile")}
         >
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>

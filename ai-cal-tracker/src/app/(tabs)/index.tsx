@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
@@ -24,10 +25,11 @@ import { AnimatedButton } from "../../components/AnimatedButton";
 import { HomeHeader } from "../../components/HomeHeader";
 import { DateSelector } from "../../components/DateSelector";
 import { SegmentedHalfCircleProgress30 } from "../../components/HalfProgress";
-import { getUserFitnessPlan, getDailyLog, DailyLog, updateFitnessPlanTargets, logWater } from "../../services/userService";
+import { getUserFitnessPlan, getDailyLog, DailyLog, updateFitnessPlanTargets, logWater, addMealLog } from "../../services/userService";
 import { checkAndSyncReminders } from "../../services/notificationService";
 import { db } from "../../config/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
+import { analyzeTextMeal, FoodAnalysisResult } from "../../services/aiService";
 
 const FULL_GLASS_IMG = require("../../../assets/images/full_glass.png");
 const HALF_GLASS_IMG = require("../../../assets/images/half_glass.png");
@@ -40,6 +42,7 @@ export default function Index() {
   const router = useRouter();
   const [aiMealText, setAiMealText] = useState("");
   const [isAiInputFocused, setIsAiInputFocused] = useState(false);
+  const [isAnalyzingMeal, setIsAnalyzingMeal] = useState(false);
 
   // Date and Data State
   const [selectedDateStr, setSelectedDateStr] = useState(() => {
@@ -119,6 +122,39 @@ export default function Index() {
     setEditFats(targetFats.toString());
     setEditCarbs(targetCarbs.toString());
     setIsEditModalVisible(true);
+  };
+
+  const handleAnalyzeMeal = async () => {
+    if (!aiMealText.trim() || !userId) return;
+    setIsAnalyzingMeal(true);
+    try {
+      const result = await analyzeTextMeal(aiMealText);
+      const today = new Date();
+      const offset = today.getTimezoneOffset();
+      const localToday = new Date(today.getTime() - (offset * 60 * 1000));
+      const dateString = localToday.toISOString().split("T")[0];
+      const timeString = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      await addMealLog(userId, dateString, {
+        name: result.foodName,
+        calories: result.calories,
+        protein: result.protein,
+        carbs: result.carbs,
+        fats: result.fat,
+        time: timeString,
+      });
+
+      setAiMealText("");
+      Alert.alert(
+        "Logged Successfully",
+        `Added "${result.foodName}" (${result.calories} kcal) to your daily log!`
+      );
+    } catch (error) {
+      console.error("Failed to log meal:", error);
+      Alert.alert("Error", "Failed to analyze and log the meal. Please try again.");
+    } finally {
+      setIsAnalyzingMeal(false);
+    }
   };
 
   const handleSaveTargets = async () => {
@@ -304,6 +340,28 @@ export default function Index() {
             </View>
           </View>
 
+          {/* End of Day Review Check-in */}
+          {progressRatio < 0.8 && (
+            <TouchableOpacity 
+              style={[styles.calorieCard, { backgroundColor: '#1e293b', borderColor: '#334155', padding: 20, marginBottom: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+              onPress={() => router.push({ pathname: '/coach-call', params: { shortfall: Math.max(0, targetCalories - consumedCalories), calories: consumedCalories, target: targetCalories } })}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <Ionicons name="sparkles" size={18} color="#10b981" style={{ marginRight: 6 }} />
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>End of Day Review</Text>
+                </View>
+                <Text style={{ color: '#94a3b8', fontSize: 13, lineHeight: 18 }}>
+                  You are {Math.max(0, targetCalories - consumedCalories)} kcal under your target. Tap here to chat with your AI Coach for a quick check-in.
+                </Text>
+              </View>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#10b981', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="call" size={20} color="#fff" />
+              </View>
+            </TouchableOpacity>
+          )}
+
           {/* Water Intake Card */}
           <View style={styles.calorieCard}>
             <View style={styles.calorieCardHeader}>
@@ -443,7 +501,12 @@ export default function Index() {
                 onBlur={() => setIsAiInputFocused(false)}
                 style={styles.aiInput}
               />
-              <AnimatedButton variant="primary" style={styles.aiSendBtn}>
+              <AnimatedButton
+                variant="primary"
+                style={styles.aiSendBtn}
+                onPress={handleAnalyzeMeal}
+                loading={isAnalyzingMeal}
+              >
                 <Ionicons name="arrow-forward" size={16} color={colors.white} />
               </AnimatedButton>
             </View>
@@ -602,23 +665,27 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   calorieCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    borderRadius: 30,
+    padding: 24,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(150, 150, 150, 0.12)",
     alignItems: "center",
-    marginBottom: spacing.xxl,
-    ...shadows.md,
+    marginBottom: 28,
+    shadowColor: colors.textPrimary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 4,
   },
   burnedBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 107, 107, 0.1)",
-    borderRadius: borderRadius.round,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 4,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
+    backgroundColor: "rgba(255, 107, 107, 0.12)",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: 16,
+    marginBottom: 20,
   },
   burnedBadgeText: {
     color: "#FF6B6B",
@@ -671,9 +738,9 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   metricValue: {
     color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: "bold",
-    marginTop: 4,
+    fontSize: 16,
+    fontWeight: "800",
+    marginTop: 6,
   },
   metricDivider: {
     width: 1,
@@ -684,18 +751,18 @@ const getStyles = (colors: any) => StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    marginTop: spacing.md,
-    gap: spacing.sm,
+    marginTop: 24,
+    gap: 12,
   },
   cardMacroItem: {
     alignItems: "center",
     flex: 1,
-    backgroundColor: "rgba(41, 143, 80, 0.08)",
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xs,
+    backgroundColor: "rgba(150, 150, 150, 0.04)",
+    borderRadius: 24,
+    paddingVertical: 18,
+    paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: "rgba(41, 143, 80, 0.15)",
+    borderColor: "rgba(150, 150, 150, 0.08)",
   },
   cardMacroValue: {
     fontSize: 16,
@@ -755,12 +822,16 @@ const getStyles = (colors: any) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
+    borderColor: "rgba(150, 150, 150, 0.1)",
+    shadowColor: colors.textPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   mealIconWrapper: {
     width: 42,
@@ -824,12 +895,16 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   aiLogCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: "rgba(41, 143, 80, 0.18)",
-    padding: spacing.xl,
-    marginBottom: spacing.xxl,
-    ...shadows.md,
+    borderColor: "rgba(41, 143, 80, 0.25)",
+    padding: 24,
+    marginBottom: 32,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 4,
   },
   aiHeader: {
     flexDirection: "row",

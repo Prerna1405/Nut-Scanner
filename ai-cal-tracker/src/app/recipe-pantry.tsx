@@ -145,6 +145,9 @@ export default function PantryScreen() {
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName}>{item.name}</Text>
                     {item.category ? <Text style={styles.itemCategory}>{item.category}</Text> : null}
+                    {item.expiryDate ? (
+                      <Text style={styles.itemExpiry}>Expires: {item.expiryDate}</Text>
+                    ) : null}
                     
                     <View style={styles.itemQuantityRow}>
                       <Text style={styles.itemQuantity}>{item.quantity}</Text>
@@ -232,8 +235,13 @@ function AddItemModal({ isOpen, onClose, onAdd, colors }: any) {
   const [unit, setUnit] = useState('pcs');
   const [category, setCategory] = useState('');
   const [lowStock, setLowStock] = useState('1');
+  const [expiryDate, setExpiryDate] = useState('');
 
   if (!isOpen) return null;
+
+  const handleDateChange = (text: string) => {
+    setExpiryDate(text);
+  };
 
   return (
     <Modal visible={isOpen} transparent animationType="slide">
@@ -267,6 +275,9 @@ function AddItemModal({ isOpen, onClose, onAdd, colors }: any) {
             <Text style={[stylesModal.label, { color: colors.textSecondary }]}>Category (e.g. Meat, Dairy)</Text>
             <TextInput style={[stylesModal.input, { color: colors.textPrimary, borderColor: colors.border }]} value={category} onChangeText={setCategory} />
 
+            <Text style={[stylesModal.label, { color: colors.textSecondary }]}>Expiry Date (YYYY-MM-DD)</Text>
+            <TextInput style={[stylesModal.input, { color: colors.textPrimary, borderColor: colors.border }]} value={expiryDate} onChangeText={handleDateChange} placeholder="e.g. 2026-07-04" placeholderTextColor={colors.textSecondary} />
+
             <Text style={[stylesModal.label, { color: colors.textSecondary }]}>Low Stock Alert Threshold</Text>
             <TextInput style={[stylesModal.input, { color: colors.textPrimary, borderColor: colors.border }]} value={lowStock} onChangeText={setLowStock} keyboardType="numeric" />
 
@@ -276,7 +287,7 @@ function AddItemModal({ isOpen, onClose, onAdd, colors }: any) {
               </TouchableOpacity>
               <TouchableOpacity style={[stylesModal.btn, { backgroundColor: '#16a34a' }]} onPress={() => {
                 if (name) {
-                  onAdd({ name, quantity: Number(quantity)||0, unit, category, lowStock: Number(lowStock)||0 });
+                  onAdd({ name, quantity: Number(quantity)||0, unit, category, lowStock: Number(lowStock)||0, expiryDate: expiryDate || undefined });
                   onClose();
                 }
               }}>
@@ -428,6 +439,11 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderRadius: 4,
     marginTop: 2,
     overflow: 'hidden',
+  },
+  itemExpiry: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   itemQuantityRow: {
     flexDirection: 'row',

@@ -7,11 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "fitbite",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#208AEF"
-    },
     "ios": {
       "icon": "./assets/expo.icon"
     },

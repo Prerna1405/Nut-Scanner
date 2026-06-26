@@ -5,17 +5,62 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Y29uY3JldGUtcGlwZWZpc2gtMzkuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_GEMINI_API_KEY": "<YOUR_GEMINI_API_KEY>",
+        "EXPO_PUBLIC_FATSECRET_CLIENT_ID": "<YOUR_FATSECRET_CLIENT_ID>",
+        "EXPO_PUBLIC_FATSECRET_CLIENT_SECRET": "<YOUR_FATSECRET_CLIENT_SECRET>",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "<YOUR_FIREBASE_API_KEY>",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ai-cal-tracker-53689",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ai-cal-tracker-53689.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1066886117818",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1066886117818:web:0adddb9f710c646e13c583",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ai-cal-tracker-53689.firebaseapp.com",
+        "EXPO_PUBLIC_SPOONACULAR_API_KEY": "<YOUR_SPOONACULAR_API_KEY>",
+        "EXPO_PUBLIC_OPENROUTER_KEY": "<YOUR_OPENROUTER_KEY>",
+        "EXPO_PUBLIC_OPENAI_API_KEY": "<YOUR_OPENAI_API_KEY>"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Y29uY3JldGUtcGlwZWZpc2gtMzkuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_GEMINI_API_KEY": "<YOUR_GEMINI_API_KEY>",
+        "EXPO_PUBLIC_FATSECRET_CLIENT_ID": "<YOUR_FATSECRET_CLIENT_ID>",
+        "EXPO_PUBLIC_FATSECRET_CLIENT_SECRET": "<YOUR_FATSECRET_CLIENT_SECRET>",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "<YOUR_FIREBASE_API_KEY>",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ai-cal-tracker-53689",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ai-cal-tracker-53689.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1066886117818",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1066886117818:web:0adddb9f710c646e13c583",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ai-cal-tracker-53689.firebaseapp.com",
+        "EXPO_PUBLIC_SPOONACULAR_API_KEY": "<YOUR_SPOONACULAR_API_KEY>",
+        "EXPO_PUBLIC_OPENROUTER_KEY": "<YOUR_OPENROUTER_KEY>",
+        "EXPO_PUBLIC_OPENAI_API_KEY": "<YOUR_OPENAI_API_KEY>"
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Y29uY3JldGUtcGlwZWZpc2gtMzkuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_GEMINI_API_KEY": "<YOUR_GEMINI_API_KEY>",
+        "EXPO_PUBLIC_FATSECRET_CLIENT_ID": "<YOUR_FATSECRET_CLIENT_ID>",
+        "EXPO_PUBLIC_FATSECRET_CLIENT_SECRET": "<YOUR_FATSECRET_CLIENT_SECRET>",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "<YOUR_FIREBASE_API_KEY>",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ai-cal-tracker-53689",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ai-cal-tracker-53689.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1066886117818",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1066886117818:web:0adddb9f710c646e13c583",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ai-cal-tracker-53689.firebaseapp.com",
+        "EXPO_PUBLIC_SPOONACULAR_API_KEY": "<YOUR_SPOONACULAR_API_KEY>",
+        "EXPO_PUBLIC_OPENROUTER_KEY": "<YOUR_OPENROUTER_KEY>",
+        "EXPO_PUBLIC_OPENAI_API_KEY": "<YOUR_OPENAI_API_KEY>"
+      },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       }
     }
   },

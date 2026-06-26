@@ -660,6 +660,7 @@ export default function AnalyticsScreen() {
                 yAxisSuffix=" ml"
                 fromZero
                 bezier
+                withDots={false}
                 chartConfig={{
                   backgroundColor: colors.surface,
                   backgroundGradientFrom: colors.surface,
@@ -674,6 +675,8 @@ export default function AnalyticsScreen() {
                     r: "4",
                     strokeWidth: "2",
                     stroke: "#0EA5E9",
+                    onPressIn: undefined,
+                    onPressOut: undefined,
                   },
                   propsForBackgroundLines: {
                     strokeWidth: 1,

@@ -122,6 +122,21 @@ export default function AdminScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Coach Logs Link */}
+        <TouchableOpacity 
+          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, marginBottom: spacing.xl, flexDirection: 'row', alignItems: 'center' }]}
+          onPress={() => router.push('/admin-coach-logs')}
+        >
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>
+            <Ionicons name="people" size={20} color="#10b981" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.label, { color: colors.textPrimary, marginBottom: 2 }]}>AI Coach Check-ins</Text>
+            <Text style={{ fontSize: 13, color: colors.textSecondary }}>Review user AI coaching logs and missed targets</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.border} />
+        </TouchableOpacity>
+
         {/* Lunch Notification */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Lunch Reminder</Text>

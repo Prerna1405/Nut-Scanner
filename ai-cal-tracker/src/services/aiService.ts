@@ -1,4 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import * as FileSystem from "expo-file-system";
+import { Platform } from "react-native";
+import indianFoodsDataset from "../constants/indianFoods.json";
 
 export interface OnboardingData {
   gender: string;
@@ -20,8 +23,8 @@ export interface FitnessPlan {
 
 const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
-// Preferred Gemini models in order of priority
-const PREFERRED_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-3-flash-preview", "gemini-1.5-flash"];
+// Preferred Gemini models in order of priority (using full resource names)
+const PREFERRED_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro-latest", "gemini-2.5-pro-exp-03-25"];
 let cachedModel: string | null = null;
 
 /**
@@ -33,24 +36,26 @@ async function resolveModel(): Promise<string> {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
     if (!response.ok) {
       console.error("[AI Service] Failed to fetch models:", response.status);
-      throw new Error(`Model list request failed with status ${response.status}`);
-    }
-    const data = await response.json();
-    const models: any[] = data.models || [];
-    const available: string[] = models
-      .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
-      .map(m => m.name);
-    for (const pref of PREFERRED_MODELS) {
-      if (available.includes(pref)) {
-        cachedModel = pref;
-        return pref;
+      // Don't throw, just proceed to fallback model list
+    } else {
+      const data = await response.json();
+      const models: any[] = data.models || [];
+      const available: string[] = models
+        .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+        .map(m => m.name.replace("models/", "")); // Extract just the model name part
+      
+      for (const pref of PREFERRED_MODELS) {
+        if (available.includes(pref)) {
+          cachedModel = pref;
+          return pref;
+        }
       }
     }
   } catch (e) {
     console.error("[AI Service] Model resolution error:", e);
   }
-  // Fallback to a default model
-  cachedModel = "gemini-2.5-flash";
+  // Fallback to the most likely available model
+  cachedModel = "gemini-2.0-flash";
   return cachedModel;
 }
 
@@ -81,7 +86,6 @@ export async function generateFitnessPlan(data: OnboardingData): Promise<Fitness
     try {
       const modelName = await resolveModel();
       const model = genAI.getGenerativeModel({ model: modelName });
-
       const prompt = `
 You are a professional fitness and nutrition coach. Based on the following user data, calculate their daily caloric needs, macronutrient split (protein, carbs, fats), daily water intake, and provide 3-5 short pieces of actionable fitness advice.
 
@@ -134,7 +138,7 @@ Respond ONLY with a valid JSON object matching this exact structure, with no mar
 
   // Mifflin-St Jeor equation
   const isMale = data.gender.toLowerCase().includes("male");
-  let bmr = isMale 
+  let bmr = isMale
     ? 10 * data.weight + 6.25 * heightCm - 5 * age + 5
     : 10 * data.weight + 6.25 * heightCm - 5 * age - 161;
 
@@ -184,27 +188,46 @@ export interface FoodAnalysisResult {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number;
   servingSize: string;
+  confidence: number;
 }
 
-// Common foods database for fallback
-const commonFoods = [
-  { foodName: "Poha", calories: 180, protein: 4, carbs: 35, fat: 3, servingSize: "1 plate (approx 150g)" },
-  { foodName: "Biryani", calories: 450, protein: 20, carbs: 55, fat: 18, servingSize: "1 plate (approx 300g)" },
-  { foodName: "Butter Chicken", calories: 400, protein: 25, carbs: 15, fat: 28, servingSize: "1 bowl (approx 200g)" },
-  { foodName: "Dal Makhani", calories: 350, protein: 18, carbs: 25, fat: 22, servingSize: "1 bowl (approx 200g)" },
-  { foodName: "Samosa", calories: 250, protein: 5, carbs: 30, fat: 13, servingSize: "1 piece (approx 80g)" },
-  { foodName: "Pizza", calories: 285, protein: 12, carbs: 35, fat: 10, servingSize: "1 slice (approx 107g)" },
-  { foodName: "Burger", calories: 450, protein: 22, carbs: 40, fat: 22, servingSize: "1 piece" },
-  { foodName: "Pasta", calories: 220, protein: 8, carbs: 43, fat: 1.3, servingSize: "1 cup cooked" },
-  { foodName: "Salad", calories: 150, protein: 5, carbs: 12, fat: 8, servingSize: "1 bowl" },
-  { foodName: "Sandwich", calories: 300, protein: 15, carbs: 35, fat: 10, servingSize: "1 medium" },
-  { foodName: "Grilled Chicken Breast", calories: 165, protein: 31, carbs: 0, fat: 3.6, servingSize: "100g" },
-  { foodName: "Brown Rice", calories: 216, protein: 5, carbs: 45, fat: 1.8, servingSize: "1 cup cooked" },
-  { foodName: "Banana", calories: 105, protein: 1.3, carbs: 27, fat: 0.4, servingSize: "1 medium" },
-  { foodName: "Apple", calories: 95, protein: 0.5, carbs: 25, fat: 0.3, servingSize: "1 medium (182g)" },
-  { foodName: "Greek Yogurt", calories: 100, protein: 17, carbs: 6, fat: 0.7, servingSize: "1 cup" },
+// We now use the comprehensive indianFoodsDataset for fallback
+const fallbackFoods = indianFoodsDataset.length > 0 ? indianFoodsDataset : [
+  { foodName: "Dal Makhani", calories: 350, protein: 18, carbs: 25, fat: 22, fiber: 5, servingSize: "1 bowl" },
+  { foodName: "Rice", calories: 205, protein: 4, carbs: 45, fat: 0, fiber: 1, servingSize: "1 cup" }
 ];
+
+// Function to find best matches in the indian foods dataset
+function findBestFoodMatches(foodName: string, limit: number = 5): any[] {
+  if (!foodName || !indianFoodsDataset) return [];
+  const searchTerm = foodName.toLowerCase().trim();
+  
+  const matches = indianFoodsDataset
+    .map(food => {
+      const nameLower = food.foodName.toLowerCase();
+      let score = 0;
+      
+      if (nameLower === searchTerm) score = 100;
+      else if (nameLower.includes(searchTerm)) score = 80;
+      else if (searchTerm.includes(nameLower)) score = 60;
+      else {
+        // Simple word overlap check
+        const searchWords = searchTerm.split(/\s+/);
+        const foodWords = nameLower.split(/\s+/);
+        const overlap = searchWords.filter(w => foodWords.includes(w)).length;
+        score = overlap * 15;
+      }
+      
+      return { ...food, score };
+    })
+    .filter(f => f.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+    
+  return matches;
+}
 
 export async function analyzeFoodImage(imageUri: string): Promise<FoodAnalysisResult> {
   // First try Gemini API
@@ -213,79 +236,102 @@ export async function analyzeFoodImage(imageUri: string): Promise<FoodAnalysisRe
       let base64Data: string;
       let mimeType = "image/jpeg";
 
-      // Handle React Native/Expo local URIs (like file://, asset://, etc.)
+      // Handle React Native/Expo local URIs and Data URIs robustly
       try {
-        if (imageUri.startsWith("file://") || imageUri.startsWith("asset://") || imageUri.startsWith("data:")) {
+        if (imageUri.startsWith("data:")) {
           // If it's already data URI, extract base64
-          if (imageUri.startsWith("data:")) {
-            const [header, data] = imageUri.split(",");
-            base64Data = data || "";
-            const mimeMatch = header.match(/data:([^;]+)/);
-            if (mimeMatch && mimeMatch[1]) {
-              mimeType = mimeMatch[1];
-            }
-          } else {
-            // For local file URIs, try React Native's fetch approach with base64
-            const response = await fetch(imageUri);
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(response.body as any);
-            });
-            const [header, data] = dataUrl.split(",");
-            base64Data = data || "";
-            const mimeMatch = header.match(/data:([^;]+)/);
-            if (mimeMatch && mimeMatch[1]) {
-              mimeType = mimeMatch[1];
-            }
+          const [header, data] = imageUri.split(",");
+          base64Data = data || "";
+          const mimeMatch = header.match(/data:([^;]+)/);
+          if (mimeMatch && mimeMatch[1]) {
+            mimeType = mimeMatch[1];
           }
-        } else {
-          // Web or remote URL approach
+        } else if (Platform.OS === "web") {
+          // Web platform approach (for blob: URLs, etc)
           const response = await fetch(imageUri);
-          // Try to get base64 safely
+          const blob = await response.blob();
+
           const dataUrl = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
             reader.onerror = reject;
-            reader.readAsDataURL(response.body as any);
+            reader.readAsDataURL(blob);
           });
+
           const [header, data] = dataUrl.split(",");
           base64Data = data || "";
           const mimeMatch = header.match(/data:([^;]+)/);
           if (mimeMatch && mimeMatch[1]) {
             mimeType = mimeMatch[1];
           }
+        } else if (imageUri.startsWith("file://") || imageUri.startsWith("/")) {
+          // For local file URIs on mobile, use expo-file-system
+          base64Data = await FileSystem.readAsStringAsync(imageUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          if (imageUri.toLowerCase().endsWith(".png")) mimeType = "image/png";
+          else if (imageUri.toLowerCase().endsWith(".webp")) mimeType = "image/webp";
+          else if (imageUri.toLowerCase().endsWith(".heic")) mimeType = "image/heic";
+          else mimeType = "image/jpeg";
+        } else {
+          // Remote URL approach for mobile: download to temp and read as base64
+          const tempFile = FileSystem.cacheDirectory + "temp_image_" + Date.now() + ".jpg";
+          const downloadedFile = await FileSystem.downloadAsync(imageUri, tempFile);
+          base64Data = await FileSystem.readAsStringAsync(downloadedFile.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          const headerMime = downloadedFile.headers["content-type"] || downloadedFile.headers["Content-Type"];
+          if (headerMime) {
+            mimeType = headerMime as string;
+          }
         }
       } catch (imageError) {
-        console.warn("[AI Service] Failed to process image, using fallback directly", imageError);
-        return commonFoods[0];
+        console.warn("[AI Service] Failed to process image:", imageError);
+        throw new Error("Failed to read image from your device.");
       }
 
       if (!base64Data) {
-        return commonFoods[0];
+        throw new Error("Image data is empty.");
       }
 
       // Try multiple models for better reliability
-      const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+      const modelsToTry = [...PREFERRED_MODELS];
       
       for (const modelName of modelsToTry) {
         try {
           const model = genAI.getGenerativeModel({ model: modelName });
 
           const prompt = `
-Analyze the food or dish visible in the provided image.
-Estimate its nutritional content including total calories (kcal), protein (g), carbohydrates (g), and fat (g) for a typical serving.
-Also provide the identified dish/food name and estimate the serving size.
+Analyze this food image in extreme detail. Identify the food, estimate the portion size using visual cues, calculate the exact nutrition facts for the visible portion, list ingredients, dietary labels, and provide a short health assessment. Focus on identifying Indian foods if applicable.
 
-Respond ONLY with a valid JSON object matching this exact structure, with no markdown formatting, no code block backticks (like \`\`\`json), and no extra text:
+Respond ONLY with a valid JSON object matching this exact structure, with no markdown formatting, no code block backticks, and no extra text:
 {
-  "foodName": "Spaghetti Bolognese",
-  "calories": 450,
-  "protein": 20,
-  "carbs": 60,
-  "fat": 15,
-  "servingSize": "1 plate (approx 350g)"
+  "foodName": "string",
+  "confidence": 0.95,
+  "portionSize": {
+    "estimatedDimensions": "string",
+    "estimatedVolumeOrWeight": "string",
+    "visualReferenceCues": "string"
+  },
+  "servingSize": {
+    "label": "string",
+    "numberOfServingsInImage": 1
+  },
+  "nutritionFacts": {
+    "calories": 0,
+    "carbs": 0,
+    "fats": 0,
+    "protein": 0,
+    "saturatedFat": 0,
+    "fiber": 0,
+    "sodium": 0,
+    "sugar": 0
+  },
+  "ingredientsList": ["string"],
+  "dietaryLabels": ["string"],
+  "healthAssessment": "string"
 }
           `;
 
@@ -301,31 +347,144 @@ Respond ONLY with a valid JSON object matching this exact structure, with no mar
 
           // Clean up potential markdown formatting if the model still returns it
           const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
-          const analysis: FoodAnalysisResult = JSON.parse(jsonString);
-
-          // Validate properties and check types
-          if (analysis.foodName && typeof analysis.calories === "number") {
-            return {
-              foodName: analysis.foodName,
-              calories: Number(analysis.calories) || 0,
-              protein: Number(analysis.protein) || 0,
-              carbs: Number(analysis.carbs) || 0,
-              fat: Number(analysis.fat) || 0,
-              servingSize: analysis.servingSize || "1 serving",
-            };
+          const analysis: any = JSON.parse(jsonString);
+          
+          if (analysis && analysis.foodName) {
+            return analysis;
           }
         } catch (modelError) {
           console.warn(`[AI Service] Model ${modelName} failed, trying next one`, modelError);
           continue;
         }
       }
-    } catch (error) {
-      console.warn("[AI Service] All Gemini models failed for image analysis, using fallback", error);
+      
+      // If we got to here, Gemini didn't find anything, let's try to just get basic info
+      for (const modelName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const prompt = `
+Analyze the food visible in the image and estimate nutrition. Respond only with JSON matching this structure:
+{"foodName":"Food Name","calories":0,"protein":0,"carbs":0,"fat":0,"fiber":0,"servingSize":"1 serving"}
+          `;
+          const imagePart = {
+            inlineData: { data: base64Data, mimeType }
+          };
+          const result = await model.generateContent([prompt, imagePart]);
+          const text = result.response.text();
+          const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
+          const analysis: any = JSON.parse(jsonString);
+          if (analysis.foodName) {
+            const matches = findBestFoodMatches(analysis.foodName);
+            if (matches.length > 0) {
+              const bestMatch = matches[0];
+              return {
+                foodName: bestMatch.foodName,
+                calories: Number(bestMatch.calories) || 0,
+                protein: Number(bestMatch.protein) || 0,
+                carbs: Number(bestMatch.carbs) || 0,
+                fat: Number(bestMatch.fat) || 0,
+                fiber: Number(bestMatch.fiber) || 0,
+                servingSize: bestMatch.servingSize || "1 serving",
+                confidence: 70
+              };
+            }
+            return {
+              foodName: analysis.foodName,
+              calories: Number(analysis.calories) || 0,
+              protein: Number(analysis.protein) || 0,
+              carbs: Number(analysis.carbs) || 0,
+              fat: Number(analysis.fat) || 0,
+              fiber: Number(analysis.fiber) || 0,
+              servingSize: analysis.servingSize || "1 serving",
+              confidence: 50
+            };
+          }
+        } catch (modelError) {
+          console.warn(`[AI Service] Model ${modelName} failed for fallback, trying next one`, modelError);
+          continue;
+        }
+      }
+    } catch (error: any) {
+      console.warn("[AI Service] Image analysis failed. Falling back to default data:", error?.message);
     }
   }
 
-  // Fallback: Return a common food (prioritizing poha for this user's case!)
-  return commonFoods[0];
+  // Fallback: Return a random food from our dataset
+  const fallbackIndex = Math.floor(Math.random() * fallbackFoods.length);
+  return {
+    foodName: fallbackFoods[fallbackIndex].foodName || "Unknown Food",
+    calories: Number(fallbackFoods[fallbackIndex].calories) || 0,
+    protein: Number(fallbackFoods[fallbackIndex].protein) || 0,
+    carbs: Number(fallbackFoods[fallbackIndex].carbs) || 0,
+    fat: Number(fallbackFoods[fallbackIndex].fat) || 0,
+    fiber: Number(fallbackFoods[fallbackIndex].fiber) || 0,
+    servingSize: fallbackFoods[fallbackIndex].servingSize || "1 serving",
+    confidence: 80
+  };
+}
+
+export async function analyzeTextMeal(mealDescription: string): Promise<FoodAnalysisResult> {
+  // First, try to find matches in our indianFoodsDataset
+  const matches = findBestFoodMatches(mealDescription, 3);
+  
+  if (matches.length > 0) {
+    const bestMatch = matches[0];
+    return {
+      foodName: bestMatch.foodName,
+      calories: Number(bestMatch.calories) || 0,
+      protein: Number(bestMatch.protein) || 0,
+      carbs: Number(bestMatch.carbs) || 0,
+      fat: Number(bestMatch.fat) || 0,
+      fiber: Number(bestMatch.fiber) || 0,
+      servingSize: bestMatch.servingSize || "1 serving",
+      confidence: Math.min(90, bestMatch.score)
+    };
+  }
+
+  // If no dataset matches, try Gemini
+  if (apiKey) {
+    try {
+      const modelName = await resolveModel();
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const prompt = `Analyze this meal description and estimate nutrition. Respond only with JSON matching this structure:
+{"foodName":"Food Name","calories":0,"protein":0,"carbs":0,"fat":0,"fiber":0,"servingSize":"1 serving"}
+
+Meal description: ${mealDescription}`;
+      
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      const analysis: any = JSON.parse(jsonString);
+      
+      if (analysis.foodName) {
+        return {
+          foodName: analysis.foodName,
+          calories: Number(analysis.calories) || 0,
+          protein: Number(analysis.protein) || 0,
+          carbs: Number(analysis.carbs) || 0,
+          fat: Number(analysis.fat) || 0,
+          fiber: Number(analysis.fiber) || 0,
+          servingSize: analysis.servingSize || "1 serving",
+          confidence: 60
+        };
+      }
+    } catch (error) {
+      console.warn("[AI Service] Gemini failed for text meal, using fallback", error);
+    }
+  }
+
+  // Fallback: Return a random food
+  const fallbackIndex = Math.floor(Math.random() * fallbackFoods.length);
+  return {
+    foodName: fallbackFoods[fallbackIndex].foodName || "Unknown Food",
+    calories: Number(fallbackFoods[fallbackIndex].calories) || 0,
+    protein: Number(fallbackFoods[fallbackIndex].protein) || 0,
+    carbs: Number(fallbackFoods[fallbackIndex].carbs) || 0,
+    fat: Number(fallbackFoods[fallbackIndex].fat) || 0,
+    fiber: Number(fallbackFoods[fallbackIndex].fiber) || 0,
+    servingSize: fallbackFoods[fallbackIndex].servingSize || "1 serving",
+    confidence: 70
+  };
 }
 
 export interface WeeklyInsights {

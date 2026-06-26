@@ -12,7 +12,12 @@ import { ToastProvider } from '../components/Toast';
 
 const queryClient = new QueryClient();
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+console.log("=== RootLayout ===");
+console.log("publishableKey raw:", JSON.stringify(publishableKey));
+console.log("All process.env keys:", Object.keys(process.env));
+console.log("EXPO_PUBLIC_* keys:", Object.keys(process.env).filter(k => k.startsWith("EXPO_PUBLIC_")));
 
 // Polyfill setNativeProps for Web DOM elements to support react-native-ruler-picker on Web
 if (Platform.OS === "web") {
@@ -126,11 +131,21 @@ function ConfigErrorScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <View style={styles.errorContent}>
         <View style={styles.badgeContainer}>
-          <Text style={styles.badgeText}>SETUP REQUIRED</Text>
+          <Text style={styles.badgeText}>DEBUG MODE</Text>
         </View>
-        <Text style={styles.errorTitle}>Configuration Required</Text>
+        <Text style={styles.errorTitle}>Debug Information</Text>
+        
+        <View style={styles.debugBox}>
+          <Text style={styles.debugText}>
+            publishableKey: {JSON.stringify(publishableKey)}
+          </Text>
+          <Text style={styles.debugText}>
+            EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: {JSON.stringify(process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY)}
+          </Text>
+        </View>
+
         <Text style={styles.errorDesc}>
-          To run the app, you must set up your environment variables.
+          Checking environment variables...
         </Text>
         
         <View style={styles.stepsCard}>
@@ -138,22 +153,17 @@ function ConfigErrorScreen() {
           
           <Text style={styles.stepItem}>
             <Text style={styles.stepNumber}>1. </Text>
-            Copy <Text style={styles.codeText}>.env.example</Text> to <Text style={styles.codeText}>.env</Text> in the project root folder.
+            Restart the Metro bundler with npx expo start --clear
           </Text>
           
           <Text style={styles.stepItem}>
             <Text style={styles.stepNumber}>2. </Text>
-            Add your Clerk <Text style={styles.strongText}>Publishable Key</Text> to <Text style={styles.codeText}>EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY</Text>.
+            Make sure .env file is in the root directory
           </Text>
 
           <Text style={styles.stepItem}>
             <Text style={styles.stepNumber}>3. </Text>
-            Add your Firebase project keys to the respective environment variables.
-          </Text>
-
-          <Text style={styles.stepItem}>
-            <Text style={styles.stepNumber}>4. </Text>
-            Restart your Metro bundler server (<Text style={styles.codeText}>npm start</Text>).
+            If using Expo Go, make sure the app is fully closed and reopened
           </Text>
         </View>
       </View>
@@ -224,6 +234,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+  },
+  debugBox: {
+    backgroundColor: colors.inputBg,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    width: "100%",
+    marginBottom: spacing.md,
+  },
+  debugText: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginBottom: spacing.xs,
   },
   errorDesc: {
     color: colors.textSecondary,

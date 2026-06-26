@@ -18,6 +18,7 @@ export default function FoodSearch() {
   const [results, setResults] = useState<FatSecretFood[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   // Debounced search logic
   useEffect(() => {
@@ -33,6 +34,10 @@ export default function FoodSearch() {
       try {
         const foods = await searchFoods(trimmedQuery);
         setResults(foods);
+        // Reset quantities when new results come in
+        const newQuantities: Record<string, number> = {};
+        foods.forEach(food => { newQuantities[food.id] = 1; });
+        setQuantities(newQuantities);
       } catch (err) {
         console.error("Failed to search foods:", err);
       } finally {
@@ -43,7 +48,7 @@ export default function FoodSearch() {
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
 
-  const handleAddFood = async (food: FatSecretFood) => {
+  const handleAddFood = async (food: FatSecretFood, quantity: number) => {
     if (!userId) return;
     
     setIsSubmitting(food.id);
@@ -54,12 +59,17 @@ export default function FoodSearch() {
       const dateString = localToday.toISOString().split("T")[0];
       const timeString = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+      const scaledCalories = Math.round(food.calories * quantity);
+      const scaledProtein = Number((food.protein * quantity).toFixed(1));
+      const scaledFats = Number((food.fats * quantity).toFixed(1));
+      const scaledCarbs = Number((food.carbs * quantity).toFixed(1));
+
       await addMealLog(userId, dateString, {
-        name: food.name,
-        calories: food.calories,
-        protein: food.protein,
-        fats: food.fats,
-        carbs: food.carbs,
+        name: `${food.name} (${quantity}x)`,
+        calories: scaledCalories,
+        protein: scaledProtein,
+        fats: scaledFats,
+        carbs: scaledCarbs,
         time: timeString,
       });
 
@@ -67,7 +77,7 @@ export default function FoodSearch() {
       checkAndSyncReminders(userId);
 
       showToast(
-        `Added "${food.name}" (${food.calories} kcal) to your daily log!`,
+        `Added "${food.name}" (${scaledCalories} kcal) to your daily log!`,
         "success"
       );
     } catch (error) {
@@ -80,21 +90,58 @@ export default function FoodSearch() {
 
   const renderFoodItem = ({ item }: { item: FatSecretFood }) => {
     const isAdding = isSubmitting === item.id;
+    const quantity = quantities[item.id] || 1;
+
+    const scaledCalories = Math.round(item.calories * quantity);
+    const scaledProtein = Number((item.protein * quantity).toFixed(1));
+    const scaledFats = Number((item.fats * quantity).toFixed(1));
+    const scaledCarbs = Number((item.carbs * quantity).toFixed(1));
+
     return (
       <View style={styles.card}>
         <View style={styles.cardInfo}>
           <Text style={styles.foodName} numberOfLines={2}>{item.name}</Text>
           <Text style={styles.foodDetails}>
-            {item.servingSize} • <Text style={styles.calorieHighlight}>{item.calories} kcal</Text>
+            {item.servingSize} • <Text style={styles.calorieHighlight}>{scaledCalories} kcal</Text>
           </Text>
           <Text style={styles.macroDetails}>
-            P: {item.protein}g • F: {item.fats}g • C: {item.carbs}g
+            P: {scaledProtein}g • F: {scaledFats}g • C: {scaledCarbs}g
           </Text>
+        </View>
+
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity 
+            style={styles.quantityButton} 
+            onPress={() => {
+              setQuantities(prev => ({
+                ...prev,
+                [item.id]: Math.max(1, (prev[item.id] || 1) - 1)
+              }));
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="remove" size={18} color={colors.primary} />
+          </TouchableOpacity>
+          
+          <Text style={styles.quantityText}>{quantity}</Text>
+          
+          <TouchableOpacity 
+            style={styles.quantityButton} 
+            onPress={() => {
+              setQuantities(prev => ({
+                ...prev,
+                [item.id]: (prev[item.id] || 1) + 1
+              }));
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={18} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity 
           style={styles.addButton} 
-          onPress={() => handleAddFood(item)}
+          onPress={() => handleAddFood(item, quantity)}
           disabled={isAdding}
           activeOpacity={0.7}
         >
@@ -114,7 +161,14 @@ export default function FoodSearch() {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => { Keyboard.dismiss(); router.replace('/(tabs)'); }}>
+        <TouchableOpacity style={styles.backButton} onPress={() => { 
+          Keyboard.dismiss(); 
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(tabs)'); // Navigate to home if no history
+          }
+        }}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Search Food</Text>
@@ -215,6 +269,32 @@ const styles = StyleSheet.create({
   foodDetails: { fontSize: 13, color: colors.textSecondary, marginBottom: 2, fontWeight: "500" },
   calorieHighlight: { color: colors.primary, fontWeight: "700" },
   macroDetails: { fontSize: 11, color: colors.textSecondary },
+  
+  // Quantity Controls
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(41,143,80,0.08)",
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    height: 36,
+    marginRight: spacing.sm,
+  },
+  quantityButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.sm,
+    minWidth: 30,
+    textAlign: "center",
+  },
   
   addButton: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary,

@@ -151,7 +151,6 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* Floating Menu Modal */}
       <Modal
         visible={isMenuVisible}
         transparent={true}
@@ -188,15 +187,12 @@ export default function TabLayout() {
                     <Text style={styles.menuItemText}>Food Database</Text>
                   </TouchableOpacity>
 
-                  {/* Option 4: Scan Food */}
-                  <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => {
-                    setIsMenuVisible(false);
-                    setIsScanModalVisible(true);
-                  }}>
-                    <View style={[styles.menuIconWrapper, { backgroundColor: 'rgba(252, 196, 25, 0.1)' }]}>
-                      <Ionicons name="barcode" size={28} color="#FCC419" />
+                  {/* Option 4: Intelligent Scanner */}
+                  <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => handleMenuOption('/food-scanner')}>
+                    <View style={[styles.menuIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                      <Ionicons name="nutrition" size={28} color="#10b981" />
                     </View>
-                    <Text style={styles.menuItemText}>Scan Food</Text>
+                    <Text style={styles.menuItemText}>Smart Scanner</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -206,7 +202,7 @@ export default function TabLayout() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Scan Food Choice Modal */}
+      {/* Image Source Selection Modal */}
       <Modal
         visible={isScanModalVisible}
         transparent={true}
@@ -214,47 +210,35 @@ export default function TabLayout() {
         onRequestClose={() => setIsScanModalVisible(false)}
       >
         <TouchableWithoutFeedback onPress={() => setIsScanModalVisible(false)}>
-          <View style={styles.modalOverlay}>
+          <View style={[styles.modalOverlay, { justifyContent: 'center' }]}>
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.scanDialogContainer}>
-                <Text style={styles.scanDialogTitle}>Scan Food</Text>
-                <Text style={styles.scanDialogSubtitle}>Choose how you'd like to import the food image</Text>
+                <Text style={styles.scanDialogTitle}>Analyze Food</Text>
+                <Text style={styles.scanDialogSubtitle}>How would you like to provide the food image?</Text>
 
-                <TouchableOpacity
-                  style={styles.scanOptionButton}
-                  activeOpacity={0.7}
-                  onPress={handleCamera}
-                >
+                <TouchableOpacity style={styles.scanOptionButton} activeOpacity={0.7} onPress={handleCamera}>
                   <View style={[styles.scanIconWrapper, { backgroundColor: 'rgba(41, 143, 80, 0.1)' }]}>
                     <Ionicons name="camera" size={24} color={colors.primary} />
                   </View>
                   <View style={styles.scanOptionTextWrapper}>
                     <Text style={styles.scanOptionTitle}>Take a Picture</Text>
-                    <Text style={styles.scanOptionDesc}>Use your camera to capture food details</Text>
+                    <Text style={styles.scanOptionDesc}>Use your camera to snap a photo</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                  <Ionicons name="chevron-forward" size={20} color={colors.border} />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.scanOptionButton}
-                  activeOpacity={0.7}
-                  onPress={handleGallery}
-                >
+                <TouchableOpacity style={styles.scanOptionButton} activeOpacity={0.7} onPress={handleGallery}>
                   <View style={[styles.scanIconWrapper, { backgroundColor: 'rgba(77, 171, 247, 0.1)' }]}>
                     <Ionicons name="images" size={24} color="#4DABF7" />
                   </View>
                   <View style={styles.scanOptionTextWrapper}>
                     <Text style={styles.scanOptionTitle}>Upload from Gallery</Text>
-                    <Text style={styles.scanOptionDesc}>Select an image from your library</Text>
+                    <Text style={styles.scanOptionDesc}>Choose an existing photo</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                  <Ionicons name="chevron-forward" size={20} color={colors.border} />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  activeOpacity={0.7}
-                  onPress={() => setIsScanModalVisible(false)}
-                >
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsScanModalVisible(false)}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>

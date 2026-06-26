@@ -4,10 +4,12 @@ import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { borderRadius, spacing } from "../constants/Colors";
 import { useTheme } from "../context/ThemeContext";
+import { useRouter } from "expo-router";
 
 export function HomeHeader() {
   const { user } = useUser();
   const { colors, isDark } = useTheme();
+  const router = useRouter();
   const styles = getStyles(colors);
   const firstName = user?.firstName || "Fitness Friend";
   const avatarUrl = user?.imageUrl;
@@ -34,7 +36,7 @@ export function HomeHeader() {
         style={styles.notificationButton} 
         activeOpacity={0.7}
         onPress={() => {
-          Alert.alert("Notifications", "Notification feature coming soon!");
+          router.push("/notifications");
         }}
       >
         <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
